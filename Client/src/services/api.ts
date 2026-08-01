@@ -2,16 +2,16 @@
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl && !envUrl.includes('localhost')) {
-    return envUrl;
-  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://localhost:5000/api';
+      return envUrl || 'http://localhost:5000/api';
     }
   }
-  return envUrl || '/api';
+  if (envUrl && envUrl.trim() !== '' && !envUrl.includes('localhost')) {
+    return envUrl;
+  }
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
