@@ -13,11 +13,6 @@ try {
 
 dotenv.config();
 
-// Disable Mongoose command buffering so queries fail fast when disconnected instead of hanging for 10000ms
-mongoose.set('bufferCommands', false);
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/svv_db';
-
 export const seedDatabase = async () => {
   try {
     if (mongoose.connection.readyState !== 1) return;
@@ -71,18 +66,32 @@ export const seedDatabase = async () => {
 };
 
 export const connectDB = async () => {
+  const primaryUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/svv_db';
+  const localUri = 'mongodb://127.0.0.1:27017/svv_db';
+
   try {
-    console.log('⏳ Connecting to MongoDB...');
-    const conn = await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000
+    console.log('⏳ Connecting to primary MongoDB at:', primaryUri);
+    const conn = await mongoose.connect(primaryUri, {
+      serverSelectionTimeoutMS: 4000,
+      connectTimeoutMS: 4000
     });
-    console.log(`🍃 MongoDB Connected: ${conn.connection.host}`);
+    console.log(`🍃 Primary MongoDB Connected: ${conn.connection.host}`);
     await seedDatabase();
     return true;
   } catch (error) {
-    console.warn(`⚠️ MongoDB connection warning: ${error.message}.`);
-    return false;
+    console.warn(`⚠️ Primary MongoDB connection failed (${error.message}). Connecting to Local MongoDB fallback...`);
+    try {
+      const conn = await mongoose.connect(localUri, {
+        serverSelectionTimeoutMS: 3000,
+        connectTimeoutMS: 3000
+      });
+      console.log(`🍃 Local MongoDB Fallback Connected: ${conn.connection.host}`);
+      await seedDatabase();
+      return true;
+    } catch (localErr) {
+      console.error(`❌ Local MongoDB connection failed: ${localErr.message}`);
+      return false;
+    }
   }
 };
 
