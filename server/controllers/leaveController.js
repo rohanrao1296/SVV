@@ -1,15 +1,9 @@
 import mongoose from 'mongoose';
 import LeaveRequest from '../models/LeaveRequest.js';
 
-// In-memory fallback storage for leave requests
-let memoryLeaveRequests = [];
-
 export const getLeaveRequests = async (req, res) => {
   try {
-    let leaves = [];
-    if (mongoose.connection.readyState === 1) {
-      leaves = await LeaveRequest.find().sort({ createdAt: -1 });
-    }
+    const leaves = await LeaveRequest.find().sort({ createdAt: -1 });
 
     const formattedDbLeaves = leaves.map(l => {
       const normStatus = (l.status || 'Pending').toLowerCase().replace(/\s+/g, '_');
@@ -32,23 +26,14 @@ export const getLeaveRequests = async (req, res) => {
       };
     });
 
-    // Merge DB leaves with memory leaves (removing duplicates by id)
-    const dbIds = new Set(formattedDbLeaves.map(l => l.id));
-    const uniqueMemoryLeaves = memoryLeaveRequests.filter(m => !dbIds.has(m.id));
-    const allLeaves = [...formattedDbLeaves, ...uniqueMemoryLeaves];
-
     return res.status(200).json({
       success: true,
-      count: allLeaves.length,
-      data: allLeaves
+      count: formattedDbLeaves.length,
+      data: formattedDbLeaves
     });
   } catch (error) {
-    console.error('Error fetching leave requests:', error.message);
-    return res.status(200).json({
-      success: true,
-      count: memoryLeaveRequests.length,
-      data: memoryLeaveRequests
-    });
+    console.error('❌ Error fetching leave requests from MongoDB:', error.message);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -81,30 +66,27 @@ export const createLeaveRequest = async (req, res) => {
       appliedOn
     };
 
-    let savedDbLeave = null;
-    if (mongoose.connection.readyState === 1) {
-      savedDbLeave = await LeaveRequest.create(leaveDataToSave);
-    }
+    console.log('📝 Saving leave request to MongoDB:', leaveDataToSave);
+    const savedDbLeave = await LeaveRequest.create(leaveDataToSave);
+    console.log('✅ Leave request saved to MongoDB successfully:', savedDbLeave.leaveId);
 
     const responseLeaveObject = {
-      id: savedDbLeave ? savedDbLeave.leaveId : leaveId,
-      leaveId: savedDbLeave ? savedDbLeave.leaveId : leaveId,
-      studentId: leaveDataToSave.studentId,
-      studentName: nameToUse,
-      applicantName: nameToUse,
-      classId: leaveDataToSave.classId,
-      sectionId: leaveDataToSave.sectionId,
-      startDate,
-      endDate,
-      reason,
-      documentUrl: leaveDataToSave.documentUrl,
+      id: savedDbLeave.leaveId || String(savedDbLeave._id),
+      leaveId: savedDbLeave.leaveId || String(savedDbLeave._id),
+      studentId: savedDbLeave.studentId,
+      studentName: savedDbLeave.applicantName,
+      applicantName: savedDbLeave.applicantName,
+      classId: savedDbLeave.classId,
+      sectionId: savedDbLeave.sectionId,
+      startDate: savedDbLeave.startDate,
+      endDate: savedDbLeave.endDate,
+      reason: savedDbLeave.reason,
+      documentUrl: savedDbLeave.documentUrl,
       status: 'pending',
-      remarks: '',
-      appliedOn,
-      timestamp: new Date().toISOString()
+      remarks: savedDbLeave.remarks || '',
+      appliedOn: savedDbLeave.appliedOn,
+      timestamp: savedDbLeave.createdAt ? new Date(savedDbLeave.createdAt).toISOString() : new Date().toISOString()
     };
-
-    memoryLeaveRequests.unshift(responseLeaveObject);
 
     return res.status(201).json({
       success: true,
@@ -112,7 +94,7 @@ export const createLeaveRequest = async (req, res) => {
       data: responseLeaveObject
     });
   } catch (error) {
-    console.error('Error creating leave request:', error);
+    console.error('❌ Error creating leave request in MongoDB:', error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -125,47 +107,37 @@ export const updateLeaveStatus = async (req, res) => {
     const normStatus = (status || '').toLowerCase();
     const dbStatus = normStatus === 'approved' ? 'Approved' : normStatus === 'rejected' ? 'Rejected' : 'Pending';
 
-    let updatedLeave = null;
-
-    if (mongoose.connection.readyState === 1) {
-      const queryConditions = [{ leaveId: id }];
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        queryConditions.push({ _id: id });
-      }
-
-      updatedLeave = await LeaveRequest.findOneAndUpdate(
-        { $or: queryConditions },
-        { $set: { status: dbStatus, remarks: remarks || '' } },
-        { new: true }
-      );
+    const queryConditions = [{ leaveId: id }];
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      queryConditions.push({ _id: id });
     }
 
-    // Update in memory array
-    const memIndex = memoryLeaveRequests.findIndex(l => l.id === id || l.leaveId === id);
-    if (memIndex !== -1) {
-      memoryLeaveRequests[memIndex].status = normStatus;
-      memoryLeaveRequests[memIndex].remarks = remarks || '';
-      if (!updatedLeave) {
-        updatedLeave = memoryLeaveRequests[memIndex];
-      }
+    const updatedLeave = await LeaveRequest.findOneAndUpdate(
+      { $or: queryConditions },
+      { $set: { status: dbStatus, remarks: remarks || '' } },
+      { new: true }
+    );
+
+    if (!updatedLeave) {
+      return res.status(404).json({ success: false, message: 'Leave request not found in database' });
     }
 
     const formattedLeave = {
-      id: id,
-      leaveId: id,
-      studentId: updatedLeave ? (updatedLeave.studentId || 'st_1') : 'st_1',
-      studentName: updatedLeave ? (updatedLeave.applicantName || updatedLeave.studentName || 'Student') : 'Student',
-      applicantName: updatedLeave ? (updatedLeave.applicantName || updatedLeave.studentName || 'Student') : 'Student',
-      classId: updatedLeave ? (updatedLeave.classId || 'c_8') : 'c_8',
-      sectionId: updatedLeave ? (updatedLeave.sectionId || 's_a') : 's_a',
-      startDate: updatedLeave ? updatedLeave.startDate : '',
-      endDate: updatedLeave ? updatedLeave.endDate : '',
-      reason: updatedLeave ? updatedLeave.reason : '',
-      documentUrl: updatedLeave ? (updatedLeave.documentUrl || '') : '',
+      id: updatedLeave.leaveId || String(updatedLeave._id),
+      leaveId: updatedLeave.leaveId || String(updatedLeave._id),
+      studentId: updatedLeave.studentId || 'st_1',
+      studentName: updatedLeave.applicantName || 'Student',
+      applicantName: updatedLeave.applicantName || 'Student',
+      classId: updatedLeave.classId || 'c_8',
+      sectionId: updatedLeave.sectionId || 's_a',
+      startDate: updatedLeave.startDate,
+      endDate: updatedLeave.endDate,
+      reason: updatedLeave.reason,
+      documentUrl: updatedLeave.documentUrl || '',
       status: normStatus,
-      remarks: remarks || (updatedLeave ? updatedLeave.remarks : '') || '',
-      appliedOn: updatedLeave ? updatedLeave.appliedOn : new Date().toISOString().split('T')[0],
-      timestamp: updatedLeave ? (updatedLeave.appliedOn || updatedLeave.createdAt || new Date().toISOString()) : new Date().toISOString()
+      remarks: updatedLeave.remarks || '',
+      appliedOn: updatedLeave.appliedOn,
+      timestamp: updatedLeave.createdAt ? new Date(updatedLeave.createdAt).toISOString() : new Date().toISOString()
     };
 
     return res.status(200).json({
@@ -174,6 +146,7 @@ export const updateLeaveStatus = async (req, res) => {
       data: formattedLeave
     });
   } catch (error) {
+    console.error('❌ Error updating leave status in MongoDB:', error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
