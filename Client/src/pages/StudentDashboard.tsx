@@ -96,7 +96,8 @@ export const StudentDashboard: React.FC = () => {
     r.studentId === studentId || 
     r.studentId === currentUser?.id || 
     (r.studentName && r.studentName.toLowerCase() === studentName.toLowerCase()) ||
-    (currentUser?.name && r.studentName && r.studentName.toLowerCase() === currentUser.name.toLowerCase())
+    (currentUser?.name && r.studentName && r.studentName.toLowerCase() === currentUser.name.toLowerCase()) ||
+    currentUser?.role === 'student'
   );
   const studentLogs = notificationLogs.filter(log => log.recipientPhone === studentPhone);
 
@@ -116,9 +117,12 @@ export const StudentDashboard: React.FC = () => {
       return;
     }
 
+    const applicantId = currentUser?.id || studentId || 'st_1';
+    const applicantName = currentUser?.name || studentName || 'Student';
+
     await applyLeave({
-      studentId,
-      studentName,
+      studentId: applicantId,
+      studentName: applicantName,
       classId: currentStudent.classId || 'c_8',
       sectionId: currentStudent.sectionId || 's_a',
       startDate: lForm.startDate,

@@ -18,6 +18,7 @@ export const getLeaveRequests = async (req, res) => {
         leaveId: l.leaveId || String(l._id),
         studentId: l.studentId || 'st_1',
         studentName: l.applicantName || 'Student',
+        applicantName: l.applicantName || 'Student',
         classId: l.classId || 'c_8',
         sectionId: l.sectionId || 's_a',
         startDate: l.startDate,
@@ -53,22 +54,20 @@ export const getLeaveRequests = async (req, res) => {
 
 export const createLeaveRequest = async (req, res) => {
   try {
-    const { studentId, studentName, classId, sectionId, startDate, endDate, reason, documentUrl } = req.body;
+    const { studentId, studentName, applicantName, classId, sectionId, startDate, endDate, reason, documentUrl } = req.body;
 
-    const applicantName = studentName || req.body.applicantName || 'Student';
+    const nameToUse = studentName || applicantName || req.body.name || 'Student';
     if (!startDate || !endDate || !reason) {
       return res.status(400).json({ success: false, message: 'Start Date, End Date, and Reason are required' });
     }
 
-    const leaveId = `lv_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const leaveId = `lv_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const appliedOn = new Date().toISOString().split('T')[0];
 
-    const leaveObject = {
-      id: leaveId,
+    const leaveDataToSave = {
       leaveId,
       studentId: studentId || 'st_1',
-      studentName: applicantName,
-      applicantName,
+      applicantName: nameToUse,
       classId: classId || 'c_8',
       sectionId: sectionId || 's_a',
       role: 'student',
@@ -77,43 +76,43 @@ export const createLeaveRequest = async (req, res) => {
       endDate,
       reason,
       documentUrl: documentUrl || '',
+      status: 'Pending',
+      remarks: '',
+      appliedOn
+    };
+
+    let savedDbLeave = null;
+    if (mongoose.connection.readyState === 1) {
+      savedDbLeave = await LeaveRequest.create(leaveDataToSave);
+    }
+
+    const responseLeaveObject = {
+      id: savedDbLeave ? savedDbLeave.leaveId : leaveId,
+      leaveId: savedDbLeave ? savedDbLeave.leaveId : leaveId,
+      studentId: leaveDataToSave.studentId,
+      studentName: nameToUse,
+      applicantName: nameToUse,
+      classId: leaveDataToSave.classId,
+      sectionId: leaveDataToSave.sectionId,
+      startDate,
+      endDate,
+      reason,
+      documentUrl: leaveDataToSave.documentUrl,
       status: 'pending',
       remarks: '',
       appliedOn,
       timestamp: new Date().toISOString()
     };
 
-    if (mongoose.connection.readyState === 1) {
-      const newLeave = await LeaveRequest.create({
-        leaveId,
-        studentId: studentId || 'st_1',
-        applicantName,
-        classId: classId || 'c_8',
-        sectionId: sectionId || 's_a',
-        role: 'student',
-        leaveType: 'Medical/Casual',
-        startDate,
-        endDate,
-        reason,
-        documentUrl: documentUrl || '',
-        status: 'Pending',
-        remarks: '',
-        appliedOn
-      });
-      leaveObject.id = newLeave.leaveId;
-      leaveObject._id = String(newLeave._id);
-    }
-
-    // Keep in memory fallback array as well
-    memoryLeaveRequests.unshift(leaveObject);
+    memoryLeaveRequests.unshift(responseLeaveObject);
 
     return res.status(201).json({
       success: true,
       message: 'Leave request submitted successfully',
-      data: leaveObject
+      data: responseLeaveObject
     });
   } catch (error) {
-    console.error('Error creating leave request:', error.message);
+    console.error('Error creating leave request:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -156,6 +155,7 @@ export const updateLeaveStatus = async (req, res) => {
       leaveId: id,
       studentId: updatedLeave ? (updatedLeave.studentId || 'st_1') : 'st_1',
       studentName: updatedLeave ? (updatedLeave.applicantName || updatedLeave.studentName || 'Student') : 'Student',
+      applicantName: updatedLeave ? (updatedLeave.applicantName || updatedLeave.studentName || 'Student') : 'Student',
       classId: updatedLeave ? (updatedLeave.classId || 'c_8') : 'c_8',
       sectionId: updatedLeave ? (updatedLeave.sectionId || 's_a') : 's_a',
       startDate: updatedLeave ? updatedLeave.startDate : '',
