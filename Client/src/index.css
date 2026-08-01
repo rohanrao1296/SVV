@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-schoolBg text-schoolText font-sans transition-colors duration-200 antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom CSS Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400;
+}
+
+/* Glassmorphism & Fluent UI styles */
+.glass-panel {
+  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50;
+}
+
+/* Custom calendar layout style */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+/* Pulse animation for active GPS checking */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+.radar-pulse-ring {
+  animation: radar-pulse 2s infinite ease-in-out;
+}
+
+/* Shimmer animation for Skeleton Loader */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(241, 245, 249, 0) 0%,
+    rgba(241, 245, 249, 0.8) 50%,
+    rgba(241, 245, 249, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0) 0%,
+    rgba(30, 41, 59, 0.8) 50%,
+    rgba(30, 41, 59, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Tap feedback micro-animation */
+.btn-tap-effect {
+  @apply active:scale-95 transition-transform duration-100;
+}
+
+/* Floating Action Button (FAB) */
+.fab-btn {
+  @apply fixed bottom-20 right-6 md:bottom-6 md:right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all z-40;
+}
