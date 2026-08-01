@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, NavLink, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppDataProvider } from './context/AppDataContext';
 import { ToastProvider } from './context/ToastContext';
@@ -54,9 +55,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
 // Main Unified Layout Frame
 const DashboardLayout: React.FC = () => {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isLoading, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isLoginPage = location.pathname === '/login';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -129,7 +136,7 @@ const DashboardLayout: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 z-10">
+          <div className="flex items-center gap-2.5 z-10">
             <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-850 px-2.5 py-1 rounded-full capitalize">
               Role: {currentUser.role}
             </span>
@@ -144,6 +151,14 @@ const DashboardLayout: React.FC = () => {
                 className="w-full h-full object-cover" 
               />
             </NavLink>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 rounded-lg transition-all btn-tap-effect flex items-center gap-1 text-xs font-bold"
+              title="Sign Out / Log Out"
+            >
+              <LogOut size={16} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 

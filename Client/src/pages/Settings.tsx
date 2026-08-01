@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useAppData } from '../context/AppDataContext';
 import { useToast } from '../context/ToastContext';
-import { Save, ShieldCheck, MapPin, MessageSquare, Clock, School, Download } from 'lucide-react';
+import { Save, ShieldCheck, MapPin, MessageSquare, Clock, School, Download, LogOut } from 'lucide-react';
 
 export const Settings: React.FC = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const { settings, updateSettings, backupDatabase } = useAppData();
   const { showSuccess, showError } = useToast();
   const [form, setForm] = useState({ ...settings });
   const [isSaved, setIsSaved] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     setForm({ ...settings });
@@ -339,6 +348,28 @@ export const Settings: React.FC = () => {
           >
             <Save size={18} />
             Save Institutional Config
+          </button>
+        </div>
+
+        {/* Account Session & Logout */}
+        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 rounded-2xl p-6 lg:col-span-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm flex items-center gap-2">
+              <LogOut size={18} className="text-rose-600 dark:text-rose-400" />
+              Account Session Management
+            </h4>
+            <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-0.5">
+              Sign out from SVV ERP portal and return to the login screen.
+            </p>
+          </div>
+          
+          <button 
+            type="button"
+            onClick={handleLogout}
+            className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-md shadow-rose-600/20 transition-all w-fit btn-tap-effect"
+          >
+            <LogOut size={16} />
+            Sign Out / Log Out
           </button>
         </div>
 

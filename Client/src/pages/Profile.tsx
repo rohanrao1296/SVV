@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppData } from '../context/AppDataContext';
-import { Award, Phone, Mail, MapPin, Calendar, Heart, Shield, Camera, Edit2, Save } from 'lucide-react';
+import { Award, Phone, Mail, MapPin, Calendar, Heart, Shield, Camera, Edit2, Save, LogOut } from 'lucide-react';
 import { ImageCropperModal } from '../components/ImageCropperModal';
 
 export const Profile: React.FC = () => {
-  const { currentUser, updateCurrentUser } = useAuth();
+  const { currentUser, updateCurrentUser, logout } = useAuth();
   const { students, teachers, classes, sections, subjects } = useAppData();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   if (!currentUser) return null;
 
@@ -369,6 +376,27 @@ export const Profile: React.FC = () => {
       {isStudent && renderStudentProfile()}
       {isTeacher && renderTeacherProfile()}
       {isAdmin && renderAdminProfile()}
+
+      {/* Log Out Action Card */}
+      <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 max-w-lg shadow-sm">
+        <div>
+          <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm flex items-center gap-2">
+            <LogOut size={18} className="text-rose-600 dark:text-rose-400" />
+            Session Control
+          </h4>
+          <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-0.5">
+            Sign out of your active SVV ERP session on this device.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-md shadow-rose-600/20 transition-all shrink-0 w-full sm:w-auto justify-center btn-tap-effect"
+        >
+          <LogOut size={16} />
+          Sign Out / Log Out
+        </button>
+      </div>
     </div>
   );
 };
