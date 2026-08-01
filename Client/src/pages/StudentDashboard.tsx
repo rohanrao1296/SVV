@@ -92,7 +92,12 @@ export const StudentDashboard: React.FC = () => {
 
   // Filter student-specific records
   const studentAttendance = attendance.filter(r => r.studentId === studentId || r.studentId === (currentStudent as any).studentId || r.studentName === studentName);
-  const studentLeaves = leaveRequests.filter(r => r.studentId === studentId || (r as any).studentId === studentId || r.studentName === studentName);
+  const studentLeaves = leaveRequests.filter(r => 
+    r.studentId === studentId || 
+    r.studentId === currentUser?.id || 
+    (r.studentName && r.studentName.toLowerCase() === studentName.toLowerCase()) ||
+    (currentUser?.name && r.studentName && r.studentName.toLowerCase() === currentUser.name.toLowerCase())
+  );
   const studentLogs = notificationLogs.filter(log => log.recipientPhone === studentPhone);
 
   // Statistics

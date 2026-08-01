@@ -122,7 +122,13 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [subjects] = useState<Subject[]>(DEFAULT_SUBJECTS);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(() => {
+    try {
+      const saved = localStorage.getItem('svv_leave_requests');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [notificationLogs] = useState<NotificationLog[]>([]);
   const [auditLogs] = useState<AuditLog[]>([]);
@@ -177,8 +183,21 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 4. Fetch Leave Requests
       try {
         const res = await leaveService.getAll();
-        if (res && res.success) {
-          setLeaveRequests(res.data || []);
+        if (res && res.success && res.data) {
+          const apiLeaves: LeaveRequest[] = res.data.map((l: any) => ({
+            ...l,
+            status: (l.status || 'pending').toLowerCase() as any
+          }));
+
+          setLeaveRequests((prev) => {
+            const apiIds = new Set(apiLeaves.map(l => l.id));
+            const localOnly = prev.filter(l => !apiIds.has(l.id));
+            const merged = [...apiLeaves, ...localOnly];
+            try {
+              localStorage.setItem('svv_leave_requests', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
         }
       } catch (e) {
         console.warn('Leave API unreachable.');
@@ -272,27 +291,33 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Apply Leave
   const applyLeave = async (leaveData: Omit<LeaveRequest, 'id' | 'status' | 'timestamp'>): Promise<boolean> => {
-    try {
-      const res = await leaveService.apply(leaveData);
-      if (res && res.success && res.data) {
-        const formattedLeave: LeaveRequest = {
-          ...res.data,
-          status: (res.data.status || 'pending').toLowerCase() as any
-        };
-        setLeaveRequests((prev) => [formattedLeave, ...prev.filter(l => l.id !== formattedLeave.id)]);
-        return true;
-      }
-    } catch (e) {
-      console.warn('API leave application failed:', e);
-    }
-
-    const newLeave: LeaveRequest = {
+    let newLeave: LeaveRequest = {
       ...leaveData,
       id: `l_req_${Date.now()}`,
       status: 'pending',
       timestamp: new Date().toISOString()
     };
-    setLeaveRequests((prev) => [newLeave, ...prev]);
+
+    try {
+      const res = await leaveService.apply(leaveData);
+      if (res && res.success && res.data) {
+        newLeave = {
+          ...res.data,
+          status: (res.data.status || 'pending').toLowerCase() as any
+        };
+      }
+    } catch (e) {
+      console.warn('API leave application failed, storing locally:', e);
+    }
+
+    setLeaveRequests((prev) => {
+      const updated = [newLeave, ...prev.filter(l => l.id !== newLeave.id)];
+      try {
+        localStorage.setItem('svv_leave_requests', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
     return true;
   };
 
@@ -300,29 +325,23 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateLeaveStatus = async (leaveId: string, status: LeaveRequest['status'], remarks?: string): Promise<boolean> => {
     const normStatus = status.toLowerCase() as LeaveRequest['status'];
     try {
-      const res = await leaveService.updateStatus(leaveId, normStatus, remarks);
-      if (res && res.success && res.data) {
-        const updatedData = res.data;
-        setLeaveRequests((prev) =>
-          prev.map((req) =>
-            req.id === leaveId || (req as any).studentId === leaveId || (req as any).leaveId === leaveId
-              ? { ...req, ...updatedData, status: normStatus, remarks: remarks || updatedData.remarks || '' }
-              : req
-          )
-        );
-        return true;
-      }
+      await leaveService.updateStatus(leaveId, normStatus, remarks);
     } catch (e) {
       console.warn('API leave status update failed:', e);
     }
 
-    setLeaveRequests((prev) =>
-      prev.map((req) =>
-        req.id === leaveId || (req as any).studentId === leaveId || (req as any).leaveId === leaveId
+    setLeaveRequests((prev) => {
+      const updated = prev.map((req) =>
+        req.id === leaveId || (req as any).leaveId === leaveId
           ? { ...req, status: normStatus, remarks: remarks || req.remarks || '' }
           : req
-      )
-    );
+      );
+      try {
+        localStorage.setItem('svv_leave_requests', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
     return true;
   };
 
