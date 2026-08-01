@@ -74,7 +74,7 @@ class ApiClient {
     } catch (error: any) {
       if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
         if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
-          throw new Error('Mixed Content Block: Netlify (HTTPS) cannot request insecure local HTTP server (localhost:5000). Please deploy backend server to Render/Koyeb (HTTPS) or use Ngrok.');
+          throw new Error('Mixed Content Block: Web App (HTTPS) cannot request insecure local HTTP server (localhost:5000). Please ensure backend server API URL is configured with HTTPS on Render.');
         }
         throw new Error('Network Connection Failed: Backend server is unreachable or offline.');
       }
