@@ -75,20 +75,55 @@ export const StudentDashboard: React.FC = () => {
   const { currentUser } = useAuth();
 
   // Extract student details dynamically from live state / logged in user
-  const currentStudent = students.find(s => s.phone === currentUser?.phone || s.parentPhone === currentUser?.phone) || students[0] || {
+  const currentStudent = students.find(s => 
+    s.id === currentUser?.id || 
+    (s as any).studentId === currentUser?.id ||
+    (currentUser?.phone && (s.phone === currentUser.phone || s.parentPhone === currentUser.phone)) ||
+    (currentUser?.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
+  ) || {
     id: currentUser?.id || 'st_1',
     name: currentUser?.name || 'Student Profile',
     phone: currentUser?.phone || '',
     parentPhone: currentUser?.phone || '',
-    classId: 'c_8',
-    sectionId: 's_a'
+    classId: (currentUser as any)?.classId || 'c_1',
+    sectionId: (currentUser as any)?.sectionId || 's_a'
   };
 
   const studentId = currentStudent.id || (currentStudent as any).studentId || 'st_1';
   const studentName = currentStudent.name || 'Student';
   const studentPhone = currentStudent.phone || currentStudent.parentPhone || '9876543212';
-  const currentClassObj = classes.find(c => c.id === currentStudent.classId);
-  const currentSecObj = sections.find(s => s.id === currentStudent.sectionId);
+
+  // Format Class and Section display dynamically without hardcoded fallback
+  const getClassNameDisplay = () => {
+    if (!currentStudent.classId) return 'Class Assigned';
+    const clsObj = classes.find(c => c.id === currentStudent.classId || c.name === currentStudent.classId);
+    if (clsObj) return clsObj.name;
+    
+    if (typeof currentStudent.classId === 'string') {
+      if (currentStudent.classId.startsWith('c_')) {
+        const val = currentStudent.classId.replace('c_', '');
+        if (val === 'nursery') return 'Nursery';
+        if (val === 'lkg') return 'LKG';
+        if (val === 'ukg') return 'UKG';
+        return `Class ${val}`;
+      }
+      return currentStudent.classId;
+    }
+    return 'Class Assigned';
+  };
+
+  const getSectionNameDisplay = () => {
+    if (!currentStudent.sectionId) return 'A';
+    const secObj = sections.find(s => s.id === currentStudent.sectionId || s.name === currentStudent.sectionId);
+    if (secObj) return secObj.name;
+    if (typeof currentStudent.sectionId === 'string') {
+      return currentStudent.sectionId.replace('s_', '').toUpperCase();
+    }
+    return 'A';
+  };
+
+  const classNameStr = getClassNameDisplay();
+  const sectionNameStr = getSectionNameDisplay();
 
   // Filter student-specific records
   const studentAttendance = attendance.filter(r => r.studentId === studentId || r.studentId === (currentStudent as any).studentId || r.studentName === studentName);
@@ -199,7 +234,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Class & Section</span>
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-350">{currentClassObj?.name || 'Class 8'} - Section {currentSecObj?.name || 'A'}</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-350">{classNameStr} - Section {sectionNameStr}</span>
             <span className="block text-[10px] text-slate-400">Class Teacher: Mrs. Sunita Verma</span>
           </div>
         </div>
