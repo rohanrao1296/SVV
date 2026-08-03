@@ -299,22 +299,25 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     try {
+      console.log('📤 Submitting Leave Application to backend API:', leaveData);
       const res = await leaveService.apply(leaveData);
       if (res && res.success && res.data) {
         newLeave = {
           ...res.data,
           status: (res.data.status || 'pending').toLowerCase() as any
         };
+        console.log('✅ Leave request saved to MongoDB via API:', newLeave);
       }
-    } catch (e) {
-      console.warn('API leave application failed, storing locally:', e);
+    } catch (e: any) {
+      console.error('❌ API leave application failed:', e);
+      alert(`Backend API Warning: ${e?.message || 'Server unreachable'}. Stored in local browser memory.`);
     }
 
     setLeaveRequests((prev) => {
       const updated = [newLeave, ...prev.filter(l => l.id !== newLeave.id)];
       try {
         localStorage.setItem('svv_leave_requests', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (err) {}
       return updated;
     });
 
