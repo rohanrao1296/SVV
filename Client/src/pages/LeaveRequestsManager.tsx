@@ -72,7 +72,8 @@ export const LeaveRequestsManager: React.FC = () => {
   const filteredRequests = leaveRequests.filter(req => {
     const normReqStatus = (req.status || 'pending').toLowerCase();
     const matchesStatus = statusFilter === 'all' || normReqStatus === statusFilter;
-    const matchesSearch = (req.studentName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const nameToSearch = req.studentName || (req as any).applicantName || '';
+    const matchesSearch = nameToSearch.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (req.reason || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -93,30 +94,26 @@ export const LeaveRequestsManager: React.FC = () => {
         </p>
       </div>
 
-      {/* Filters Panel */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-premium flex flex-col sm:flex-row gap-4 items-center justify-between">
-        {/* Status Toggles */}
-        <div className="flex gap-2 text-xs font-bold w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
-          {(['pending', 'approved', 'rejected', 'all'] as StatusFilterType[]).map(status => (
+      {/* Filter Tabs & Search */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto">
+          {(['pending', 'approved', 'rejected', 'all'] as StatusFilterType[]).map((tab) => (
             <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-xl transition-all border capitalize ${
-                statusFilter === status 
-                  ? 'bg-primary text-white border-primary shadow-md' 
-                  : 'bg-white dark:bg-slate-800 text-slate-505 border-slate-200 dark:border-slate-750 hover:bg-slate-50'
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                statusFilter === tab
+                  ? 'bg-white dark:bg-slate-700 text-primary dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              {getStatusLabel(status)} Leaves
+              {getStatusLabel(tab)} Leaves
             </button>
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-80 text-xs font-semibold">
-          <span className="absolute bottom-2.5 left-3 text-slate-400">
-            <Search size={14} />
-          </span>
+        <div className="relative w-full sm:w-64">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search by student name or reason..."
@@ -135,6 +132,7 @@ export const LeaveRequestsManager: React.FC = () => {
             const sec = sections.find(s => s.id === req.sectionId);
             const days = calculateDays(req.startDate, req.endDate);
             const normStatus = (req.status || 'pending').toLowerCase();
+            const studentDisplayName = req.studentName || (req as any).applicantName || 'Student';
 
             return (
               <div 
@@ -150,10 +148,10 @@ export const LeaveRequestsManager: React.FC = () => {
                 <div className="flex justify-between items-start pt-1.5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-slate-100 dark:bg-slate-850 rounded-full flex items-center justify-center text-slate-500 font-bold border border-slate-200 dark:border-slate-700">
-                      {(req.studentName || 'S').charAt(0)}
+                      {studentDisplayName.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{req.studentName}</h4>
+                      <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{studentDisplayName}</h4>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500">
                         {cls?.name || req.classId} - Section {sec?.name || req.sectionId}
                       </p>
