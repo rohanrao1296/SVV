@@ -39,9 +39,9 @@ app.get('/', (req, res) => {
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+// Start server listening on all network interfaces (0.0.0.0) for local Wi-Fi / LAN mobile device access
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server listening on 0.0.0.0:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
 });
 
