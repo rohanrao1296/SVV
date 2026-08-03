@@ -22,7 +22,14 @@ const API_BASE_URL = getApiBaseUrl();
 
 class ApiClient {
   private getToken(): string | null {
-    return localStorage.getItem('svv_token');
+    const token = localStorage.getItem('svv_token');
+    if (!token) return null;
+    if (token.length > 2048) {
+      console.warn('⚠️ Token in localStorage too large (>2KB), auto-clearing token.');
+      localStorage.removeItem('svv_token');
+      return null;
+    }
+    return token;
   }
 
   public setToken(token: string) {
