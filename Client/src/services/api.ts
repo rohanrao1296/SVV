@@ -7,6 +7,10 @@ const getApiBaseUrl = (): string => {
     if (host === 'localhost' || host === '127.0.0.1') {
       return envUrl || 'http://localhost:5000/api';
     }
+    // Auto-detect local Wi-Fi LAN IP (e.g. 192.168.x.x) for phone/laptop connectivity
+    if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(host)) {
+      return `http://${host}:5000/api`;
+    }
   }
   if (envUrl && envUrl.trim() !== '' && !envUrl.includes('localhost')) {
     return envUrl;
