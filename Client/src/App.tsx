@@ -73,8 +73,8 @@ const DashboardLayout: React.FC = () => {
     (currentUser?.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
   );
 
-  const headerAvatar = currentUser?.avatar || 
-    (currentUser?.role === 'teacher' ? teacherProf?.photo : currentUser?.role === 'student' ? studentProf?.photo : undefined) || 
+  const headerAvatar = (currentUser?.role === 'teacher' ? teacherProf?.photo : currentUser?.role === 'student' ? studentProf?.photo : undefined) || 
+    currentUser?.avatar || 
     'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop';
 
   const handleLogout = () => {

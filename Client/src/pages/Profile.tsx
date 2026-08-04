@@ -55,7 +55,7 @@ export const Profile: React.FC = () => {
         <div className="bg-gradient-to-r from-primary to-primary-dark h-32 relative mb-14">
           <div className="absolute -bottom-10 left-6 sm:left-8">
             <img 
-              src={currentUser.avatar || studentProf.photo || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop'} 
+              src={studentProf.photo || currentUser.avatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop'} 
               alt={studentProf.name} 
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md bg-white"
             />
@@ -160,7 +160,7 @@ export const Profile: React.FC = () => {
         <div className="bg-gradient-to-r from-secondary to-secondary-dark h-32 relative mb-14">
           <div className="absolute -bottom-10 left-6 sm:left-8">
             <img 
-              src={currentUser.avatar || teacherProf.photo || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop'} 
+              src={teacherProf.photo || currentUser.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop'} 
               alt={teacherProf.name} 
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md bg-white"
             />

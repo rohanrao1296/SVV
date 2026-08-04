@@ -158,13 +158,14 @@ export const updateStaff = async (req, res) => {
         { new: true }
       );
 
-      if (updatedStaff && (req.body.phone || req.body.password || req.body.name)) {
+      if (updatedStaff) {
         await User.findOneAndUpdate(
           buildUserQuery(req.params.id, updatedStaff.phone),
           {
             $set: {
               name: updatedStaff.name,
               phone: updatedStaff.phone,
+              ...(updatedStaff.photo ? { avatar: updatedStaff.photo } : {}),
               ...(req.body.password ? { password: req.body.password } : {})
             }
           }

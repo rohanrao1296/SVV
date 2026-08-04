@@ -38,8 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     (currentUser.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
   );
 
-  const displayAvatar = currentUser.avatar || 
-    (currentUser.role === 'teacher' ? teacherProf?.photo : currentUser.role === 'student' ? studentProf?.photo : undefined) || 
+  const displayAvatar = (currentUser.role === 'teacher' ? teacherProf?.photo : currentUser.role === 'student' ? studentProf?.photo : undefined) || 
+    currentUser.avatar || 
     'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop';
 
   const displayName = (currentUser.role === 'teacher' ? teacherProf?.name : currentUser.role === 'student' ? studentProf?.name : undefined) || currentUser.name;

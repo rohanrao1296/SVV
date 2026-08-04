@@ -531,7 +531,14 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     setTeachers((prev) =>
-      prev.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t))
+      prev.map((t) => (
+        t.id === updatedTeacher.id || 
+        (t as any).staffId === updatedTeacher.id || 
+        t.employeeId === updatedTeacher.employeeId || 
+        (t.phone && t.phone === updatedTeacher.phone)
+          ? { ...t, ...updatedTeacher } 
+          : t
+      ))
     );
     return true;
   };
