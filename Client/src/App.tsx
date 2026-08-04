@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { AppDataProvider } from './context/AppDataContext';
+import { AppDataProvider, useAppData } from './context/AppDataContext';
 import { ToastProvider } from './context/ToastContext';
 
 import Sidebar from './components/Sidebar';
@@ -56,9 +56,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 // Main Unified Layout Frame
 const DashboardLayout: React.FC = () => {
   const { currentUser, isLoading, logout } = useAuth();
+  const { teachers, students } = useAppData();
   const location = useLocation();
   const navigate = useNavigate();
   const isLoginPage = location.pathname === '/login';
+
+  const teacherProf = teachers.find(t => 
+    t.id === currentUser?.id || 
+    (currentUser?.phone && (t.phone === currentUser.phone || t.email === currentUser.email)) ||
+    (currentUser?.name && t.name.toLowerCase() === currentUser.name.toLowerCase())
+  );
+
+  const studentProf = students.find(s => 
+    s.id === currentUser?.id || 
+    (currentUser?.phone && (s.phone === currentUser.phone || s.parentPhone === currentUser.phone)) ||
+    (currentUser?.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
+  );
+
+  const headerAvatar = currentUser?.avatar || 
+    (currentUser?.role === 'teacher' ? teacherProf?.photo : currentUser?.role === 'student' ? studentProf?.photo : undefined) || 
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop';
 
   const handleLogout = () => {
     logout();
@@ -146,9 +163,9 @@ const DashboardLayout: React.FC = () => {
               title="View Profile"
             >
               <img 
-                src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop'} 
+                src={headerAvatar} 
                 alt={currentUser.name} 
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover bg-white" 
               />
             </NavLink>
             <button

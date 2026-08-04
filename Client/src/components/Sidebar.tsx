@@ -13,15 +13,36 @@ import {
   Users
 } from 'lucide-react';
 
+import { useAppData } from '../context/AppDataContext';
+
 interface SidebarProps {
   className?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   const { currentUser, logout } = useAuth();
+  const { teachers, students } = useAppData();
   const navigate = useNavigate();
 
   if (!currentUser) return null;
+
+  const teacherProf = teachers.find(t => 
+    t.id === currentUser.id || 
+    (currentUser.phone && (t.phone === currentUser.phone || t.email === currentUser.email)) ||
+    (currentUser.name && t.name.toLowerCase() === currentUser.name.toLowerCase())
+  );
+
+  const studentProf = students.find(s => 
+    s.id === currentUser.id || 
+    (currentUser.phone && (s.phone === currentUser.phone || s.parentPhone === currentUser.phone)) ||
+    (currentUser.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
+  );
+
+  const displayAvatar = currentUser.avatar || 
+    (currentUser.role === 'teacher' ? teacherProf?.photo : currentUser.role === 'student' ? studentProf?.photo : undefined) || 
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop';
+
+  const displayName = (currentUser.role === 'teacher' ? teacherProf?.name : currentUser.role === 'student' ? studentProf?.name : undefined) || currentUser.name;
 
   const handleLogout = () => {
     logout();
@@ -90,12 +111,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       {/* User Session Profile Card */}
       <div className="p-4 mx-4 my-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-center gap-3 border border-slate-100 dark:border-slate-800">
         <img 
-          src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop'} 
-          alt={currentUser.name} 
-          className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+          src={displayAvatar} 
+          alt={displayName} 
+          className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 bg-white"
         />
         <div className="overflow-hidden">
-          <h4 className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200">{currentUser.name}</h4>
+          <h4 className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200">{displayName}</h4>
           <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
             {currentUser.role}
           </span>

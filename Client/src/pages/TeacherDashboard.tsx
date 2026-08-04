@@ -44,7 +44,11 @@ export const TeacherDashboard: React.FC = () => {
 
 
   // Find active teacher profile (either mocked or dynamically registered)
-  const teacherProfile = teachers.find(t => t.phone === currentUser?.phone);
+  const teacherProfile = teachers.find(t => 
+    t.id === currentUser?.id || 
+    (currentUser?.phone && (t.phone === currentUser.phone || t.email === currentUser.email)) ||
+    (currentUser?.name && t.name.toLowerCase() === currentUser.name.toLowerCase())
+  ) || teachers[0];
   const isAdmin = currentUser?.role === 'admin';
 
   // Portal tabs: 'register' (Mark attendance), 'ledger' (View whole class status), 'profile' (Teacher assignments)

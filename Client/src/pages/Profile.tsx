@@ -30,8 +30,17 @@ export const Profile: React.FC = () => {
   const [isCropperOpen, setIsCropperOpen] = useState<boolean>(false);
 
   // Find respective profile info
-  const studentProf = students.find(s => s.phone === currentUser.phone || s.id === 'st_1');
-  const teacherProf = teachers.find(t => t.phone === currentUser.phone);
+  const studentProf = students.find(s => 
+    s.id === currentUser.id || 
+    (currentUser.phone && (s.phone === currentUser.phone || s.parentPhone === currentUser.phone)) ||
+    (currentUser.name && s.name.toLowerCase() === currentUser.name.toLowerCase())
+  ) || students[0];
+
+  const teacherProf = teachers.find(t => 
+    t.id === currentUser.id || 
+    (currentUser.phone && (t.phone === currentUser.phone || t.email === currentUser.email)) ||
+    (currentUser.name && t.name.toLowerCase() === currentUser.name.toLowerCase())
+  ) || teachers[0];
 
   const renderStudentProfile = () => {
     if (!studentProf) return <p className="text-sm text-slate-500">Student profile details not seeded.</p>;
@@ -43,18 +52,18 @@ export const Profile: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-premium">
         
         {/* Profile Banner */}
-        <div className="bg-gradient-to-r from-primary to-primary-dark h-36 relative">
-          <div className="absolute -bottom-12 left-8">
+        <div className="bg-gradient-to-r from-primary to-primary-dark h-32 relative mb-14">
+          <div className="absolute -bottom-10 left-6 sm:left-8">
             <img 
-              src={studentProf.photo || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop'} 
+              src={currentUser.avatar || studentProf.photo || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop'} 
               alt={studentProf.name} 
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md bg-white"
             />
           </div>
         </div>
 
         {/* Profile Body */}
-        <div className="pt-16 p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 pt-2 space-y-6">
           <div>
             <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">{studentProf.name}</h3>
             <p className="text-xs text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5">
@@ -148,18 +157,18 @@ export const Profile: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-premium">
         
         {/* Banner */}
-        <div className="bg-gradient-to-r from-secondary to-secondary-dark h-36 relative">
-          <div className="absolute -bottom-12 left-8">
+        <div className="bg-gradient-to-r from-secondary to-secondary-dark h-32 relative mb-14">
+          <div className="absolute -bottom-10 left-6 sm:left-8">
             <img 
-              src={teacherProf.photo || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop'} 
+              src={currentUser.avatar || teacherProf.photo || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop'} 
               alt={teacherProf.name} 
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-md bg-white"
             />
           </div>
         </div>
 
         {/* Body */}
-        <div className="pt-16 p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 pt-2 space-y-6">
           <div>
             <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">{teacherProf.name}</h3>
             <p className="text-xs text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5">
